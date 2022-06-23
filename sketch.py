@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import datetime as dt
+from scipy.stats import kurtosis, skew, entropy 
 import os
 
 # https://github.com/andrews0/MMIC-PPG/blob/master/sketch.py 
@@ -39,7 +39,7 @@ def clean(dir_name):
         for ii in range(0, 225000, 3750):
             smoll_df = df.iloc[ii, ii+3750]
             # calc the 3 SQIs for smoll_df
-            
+
 
 
 
