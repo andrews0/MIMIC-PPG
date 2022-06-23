@@ -11,6 +11,7 @@ from mysqi.common.utils import generate_timestamp
 from mysqi.data.signal_sqi_class import SignalSQI
 import mysqi.highlevel_functions.highlevel as sqi_hl 
 
+# https://github.com/andrews0/MMIC-PPG/blob/master/sketch.py 
 
 def npz_to_df(file_name):
     """
@@ -26,23 +27,22 @@ def npz_to_df(file_name):
     """
     # for each .npz file:
     for file in dirToFiles('PPG30min')[37:4000:538]:   # GET RID OF [:] LATER !!
+        # .npz file -> pd dataframe
         arr = np.load('PPG30min/' + file)['ppg']
         df = pd.DataFrame({'pleth':arr, 'timestamp':list(range(0, 1800000, 8))})   # stamps by milisecond
 
-        plt.figure(figsize=(14.5, 7.5))
-        plt.scatter(df['timestamp'][10000:11000], df['pleth'][10000:11000])
-        plt.title(file + ' ')
-        plt.show()
-        ppg_data = 5
-        sqis = sqi_hl.compute_SQI(ppg_data.signals, '5s', 0, 20, 'ppg', 125, 1)
+        # plt.figure(figsize=(14.5, 7.5))
+        # plt.scatter(df['timestamp'][10000:11000], df['pleth'][10000:11000])
+        # plt.title(file + ' ')
+        # plt.show() 
+
+
+        sqis = df.groupby(pd.Grouper(freq='30s')).apply(sqi_hl.segment_PPG_SQI_extraction, 125, 7, 6, (1, 1), (20, 4), 1)
         print(sqis.columns)
 
-        if wave_type == 'ppg':
-            sqis = signal.groupby(pd.Grouper(freq=segment_length)).apply(segment_PPG_SQI_extraction, sampling_rate, primary_peakdet, secondary_peakdet, (1, 1), (20, 4), template_type)
-
         #create 2 piles for sending each chunk 
-        df_good = 
-        df_bad = 
+        # df_good = 
+        # df_bad = 
 
 
         # save good and bad df's to their respective folders, using to_csv
