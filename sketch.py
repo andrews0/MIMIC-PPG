@@ -35,21 +35,19 @@ def clean(dir_name):
     for file in npz_list[37:4000:738]:   # GET RID OF [:] LATER !!!!!!!!!!!!!!!!!!!
         # .npz file -> pd dataframe
         arr = np.load('PPG30min/' + file)['ppg']
-        df = pd.DataFrame({'pleth':arr, 'timestamp':list(range(0, 1800000, 8))})   # stamps by milisecond
+        df = pd.DataFrame({'pleth':arr, 'timestamp':list(range(0, 1800000, 8)), 
+            'sqi_s':[-1000]*225000, 'sqi_p':[-1000]*225000, 'sqi_k':[-1000]*225000})   # stamps by milisecond
+
 
 
         #create 2 piles for sending each chunk 
-        df_good = pd.DataFrame({'pleth':[1], 'timestamp':[1]})
+        df_good = pd.DataFrame({'pleth':[], 'timestamp':[]})
         df_bad = pd.DataFrame({'pleth':[], 'timestamp':[]})
 
-
-        # split each df into 30sec chunks
-        
-
-
-        # for each 30sec chunk
+        # for each 30 sec chunk of df
         for ii in range(0, 225000, 3750):
             smoll_df = df.iloc[ii, ii+3750]
+
             if 'df is good':
                 df_good = pd.concat([df_good, smoll_df], ignore_index=True)
             else:
@@ -57,7 +55,6 @@ def clean(dir_name):
 
 
 
-        
         
         # save good and bad df's to their respective folders, using to_csv
         df_good.to_csv('ppg_good/' + file[:-4] + '.csv') 
@@ -72,142 +69,7 @@ def clean(dir_name):
 
 
 
-        
-
-  
-
-
-
-def PPG_reader(file_name, signal_idx, timestamp_idx, info_idx,
-               timestamp_unit='ms', sampling_rate=None,
-               start_datetime=None):
-    """
-
-    Parameters
-    ----------
-    file_name : str
-        absolute path to ppg file
-
-    signal_idx : list
-        name of one column containing signal
-
-    timestamp_idx : list
-        name of one column containing timestamps
-
-    info_idx : list
-        name of the columns for other info
-
-    timestamp_unit : str
-        unit of timestamp, only 'ms' or 's' accepted
-         (Default value = 'ms')
-    sampling_rate : float
-        if None, sampling_rate can be inferred from the
-        timestamps
-         (Default value = None)
-    start_datetime : str
-        in '%Y-%m-%d '%H:%M:%S.%f' format
-         (Default value = None)
-
-    Returns
-    -------
-    object of class SignalSQI
-
-    """
-    cols = timestamp_idx + signal_idx + info_idx
-    print(type(file_name))
-    if type(file_name) == str:
-        tmp = pd.read_csv(file_name,
-                      usecols=cols,
-                      skipinitialspace=True,
-                      skip_blank_lines=True)
-    else:
-        tmp = file_name[cols]
-
-    timestamps = tmp[timestamp_idx[0]]
-    #TODO: Generate timestamps if they are not part of the signal, infer from sampling rate
-    if start_datetime is None:
-        start_datetime = timestamps[0]
-    if isinstance(start_datetime, str):
-        try:
-            start_datetime = dt.datetime.strptime(start_datetime, '%Y-%m-%d '
-                                                                  '%H:%M:%S')
-        except Exception:
-            start_datetime = None
-            pass
-    else:
-        start_datetime = None
-    if sampling_rate is None:
-        if timestamp_unit is None:
-            raise Exception("Missing sampling_rate, not able to infer "
-                            "sampling_rate without timestamp_unit")
-        elif timestamp_unit == 'ms':
-            timestamps = timestamps / 1000
-        elif timestamp_unit != 's':
-            raise Exception("Timestamp unit must be either second (s) or "
-                            "millisecond (ms)")
-        sampling_rate = utils.calculate_sampling_rate(timestamps.to_numpy())
-    
-    info = tmp[info_idx].to_dict('list')
-    #Add index column
-    signals = tmp[signal_idx]
-    signals = signals.reset_index()
-    #Transform timestamps
-    signals['timedelta'] = pd.to_timedelta(signals.index / sampling_rate, unit='s')
-    #signals['idx'] = signals.index
-    signals = signals.set_index('timedelta')
-    signals = signals.rename(columns={'index': 'idx'})
-
-    out = SignalSQI(signals = signals, wave_type = 'ppg',
-                    sampling_rate = sampling_rate,
-                    start_datetime = start_datetime,
-                    info = info)
-    return out
-
-
-def PPG_writer(signal_sqi, file_name):
-    """
-
-    Parameters
-    ----------
-    signal_sqi : object of class SignalSQI
-
-    file_name : str
-        absolute path
-
-    file_type : str
-        file type to write, either 'csv' or 'xlsx'
-    Returns
-    -------
-    bool
-    """
-    timestamps = utils.generate_timestamp(
-        start_datetime=signal_sqi.start_datetime,
-        sampling_rate=signal_sqi.sampling_rate,
-        signal_length=len(signal_sqi.signals[0]))
-
-    signals = signal_sqi.signals[0]
-    timestamps = np.array(timestamps)
-    out_df = pd.DataFrame({'time': timestamps, 'pleth': signals})
-
-    out_df.to_csv(file_name, index=False, header=True)
-  
-    return os.path.isfile(file_name)
-
-
-
-
-
-
-
-
-
-
 clean('PPG30min')
-
-
-
-
-
 
 # plotting:
     # plt.figure(figsize=(14.5, 7.5))
