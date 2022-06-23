@@ -13,45 +13,53 @@ import mysqi.highlevel_functions.highlevel as sqi_hl
 
 # https://github.com/andrews0/MMIC-PPG/blob/master/sketch.py 
 
-def npz_to_df(file_name):
+
+# the main function
+def clean(dir_name):
     """
+    void func that takes each .npz file and separates em into good and bad csv files in 
+    their respective dirs, using sqi
+
     Parameters
     ----------
     file_name : str
         name of folder containing .npz files
-
-
-    Returns
-    -------
-    List of dataframe objects
     """
-    # for each .npz file:
-    for file in dirToFiles('PPG30min')[37:4000:538]:   # GET RID OF [:] LATER !!
+    
+    
+
+
+    dir = '/Users/andrew/Documents/ML/ppg-process/vsqi/' + dir_name
+    npz_list = [x for x in os.listdir(dir) if '.npz' in x]
+    # for each .npz file
+    for file in npz_list[37:4000:538]:   # GET RID OF [:] LATER !!
+
         # .npz file -> pd dataframe
         arr = np.load('PPG30min/' + file)['ppg']
         df = pd.DataFrame({'pleth':arr, 'timestamp':list(range(0, 1800000, 8))})   # stamps by milisecond
+        
 
-        # plt.figure(figsize=(14.5, 7.5))
-        # plt.scatter(df['timestamp'][10000:11000], df['pleth'][10000:11000])
-        # plt.title(file + ' ')
-        # plt.show() 
 
+        # split each df into 30sec chunks
 
         sqis = df.groupby(pd.Grouper(freq='30s')).apply(sqi_hl.segment_PPG_SQI_extraction, 125, 7, 6, (1, 1), (20, 4), 1)
         print(sqis.columns)
 
         #create 2 piles for sending each chunk 
-        # df_good = 
-        # df_bad = 
+        df_good = 
+        df_bad = 
 
 
         # save good and bad df's to their respective folders, using to_csv
+        df_good.to_csv( + '.csv') 
+
+
+
+
+
         
 
-
-
-
-
+  
 
 
 
@@ -172,23 +180,22 @@ def PPG_writer(signal_sqi, file_name):
 
 
 
-def dirToFiles(dir_name):
-    """
-    Parameters
-    ----------
-    dir_name : str 
-        name of directory (subdir of curr dir)
-
-    Returns
-    -------
-    List of str, of file names (.npz)
-    """
-    dir = '/Users/andrew/Documents/ML/ppg-process/vsqi/' + dir_name
-    return [x for x in os.listdir(dir) if '.npz' in x]
 
 
 
 
 
 
-npz_to_df('PPG30min')
+
+clean('PPG30min')
+
+
+
+
+
+
+# plotting:
+    # plt.figure(figsize=(14.5, 7.5))
+    # plt.scatter(df['timestamp'][10000:11000], df['pleth'][10000:11000])
+    # plt.title(file + ' ')
+    # plt.show() 
