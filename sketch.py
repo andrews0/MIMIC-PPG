@@ -27,7 +27,7 @@ def clean(dir_name):
 
     # for each .npz file
 
-    for file in npz_list[37:4000:1900]:   # GET RID OF [::] LATER !!!!!!!!!!!!!!!!!!!
+    for file in npz_list[37:4000:2700]:   # GET RID OF [::] LATER !!!!!!!!!!!!!!!!!!!
         # .npz file -> pd dataframe
         arr = np.load('PPG30min/' + file)['ppg']
         df = pd.DataFrame({'pleth':arr, 'timestamp':list(range(0, 1800000, 8)), 
@@ -36,19 +36,21 @@ def clean(dir_name):
         #create 2 piles for sending each chunk 
         df_good = pd.DataFrame({'pleth':[], 'timestamp':[], 'sqi_s':[], 'sqi_p':[], 'sqi_k':[]})
         df_bad = pd.DataFrame({'pleth':[], 'timestamp':[], 'sqi_s':[], 'sqi_p':[], 'sqi_k':[]})
-
+        print('----------------------------')
         # for each 30 sec chunk of df
-        for ii in range(0, 225000, 3750):
-            smoll_df = df.iloc[ii:ii+3750]
-            # getting rid of portions with flat values; for each 750 pts, send to bad and drop if constant
-            for kk in range(ii, ii+3750, 750):
-                temp = df.iloc[kk:kk+750]
-                if abs(temp['pleth'].max() - temp['pleth'].min()) < 0.01:
+        window = 5 * 125
+        for ii in range(0, 225000, window):
+            smoll_df = df.iloc[ii:ii+window]
+            # getting rid of portions with flat values; 
+            # for each 1 sec segment, if constant: send to bad and drop from good pile
+            for kk in range(ii, ii+window, 125):
+                temp = df.iloc[kk:kk+125]
+                if abs(temp['pleth'].max() - temp['pleth'].min()) < 0.005:
                     df_bad = pd.concat([df_bad, temp])
-                    smoll_df = smoll_df.drop(list(range(kk, kk+750)))
+                    smoll_df = smoll_df.drop(list(range(kk, kk+125)))
                     
             # calc the 3 SQIs for smoll_df
-
+            print(skew(smoll_df['pleth'], bias=False), skew(smoll_df['pleth'], bias=True))
 
 
 
@@ -58,8 +60,8 @@ def clean(dir_name):
                 df_bad = pd.concat([df_bad, smoll_df])
         
         # save good and bad df's to their respective folders, using to_csv
-        df_good.to_csv('ppg_good/' + file[:-4] + '.csv')
-        df_bad.to_csv('ppg_bad/' + file[:-4] + '.csv') 
+        # df_good.to_csv('ppg_good/' + file[:-4] + '.csv')
+        # df_bad.to_csv('ppg_bad/' + file[:-4] + '.csv') 
 
 
         
