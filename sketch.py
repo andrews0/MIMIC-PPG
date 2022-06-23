@@ -32,26 +32,41 @@ def clean(dir_name):
     dir = '/Users/andrew/Documents/ML/ppg-process/vsqi/' + dir_name
     npz_list = [x for x in os.listdir(dir) if '.npz' in x]
     # for each .npz file
-    for file in npz_list[37:4000:538]:   # GET RID OF [:] LATER !!
-
+    for file in npz_list[37:4000:738]:   # GET RID OF [:] LATER !!!!!!!!!!!!!!!!!!!
         # .npz file -> pd dataframe
         arr = np.load('PPG30min/' + file)['ppg']
         df = pd.DataFrame({'pleth':arr, 'timestamp':list(range(0, 1800000, 8))})   # stamps by milisecond
-        
+
+
+        #create 2 piles for sending each chunk 
+        df_good = pd.DataFrame({'pleth':[1], 'timestamp':[1]})
+        df_bad = pd.DataFrame({'pleth':[], 'timestamp':[]})
 
 
         # split each df into 30sec chunks
-
-        sqis = df.groupby(pd.Grouper(freq='30s')).apply(sqi_hl.segment_PPG_SQI_extraction, 125, 7, 6, (1, 1), (20, 4), 1)
-        print(sqis.columns)
-
-        #create 2 piles for sending each chunk 
-        df_good = 
-        df_bad = 
+        
 
 
+        # for each 30sec chunk
+        for ii in range(0, 225000, 3750):
+            smoll_df = df.iloc[ii, ii+3750]
+            if 'df is good':
+                df_good = pd.concat([df_good, smoll_df], ignore_index=True)
+            else:
+                df_bad = pd.concat([df_bad, smoll_df], ignore_index=True)
+
+
+
+        
+        
         # save good and bad df's to their respective folders, using to_csv
-        df_good.to_csv( + '.csv') 
+        df_good.to_csv('ppg_good/' + file[:-4] + '.csv') 
+        df_bad.to_csv('ppg_bad/' + file[:-4] + '.csv') 
+
+
+        
+        
+        
 
 
 
