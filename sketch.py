@@ -1,11 +1,10 @@
-from ensurepip import version
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from scipy.stats import kurtosis, skew, entropy 
+from scipy.stats import skew
 import os
 
-# https://github.com/andrews0/MMIC-PPG/blob/master/sketch.py 
+# https://github.com/andrews0/MIMIC-PPG/blob/master/sketch.py 
 # Andrew Shin 
 # June 2022
 
