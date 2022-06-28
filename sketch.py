@@ -21,22 +21,22 @@ def clean(dir_name):
     file_name : str
         name of folder containing .npz files
     """
-
     dir = '/Users/andrew/Documents/ML/ppg-process/vsqi/' + dir_name
     npz_list = [x for x in os.listdir(dir) if '.npz' in x]
 
     # for each .npz file
-
-    for file in npz_list[0:4000:1200]:   # GET RID OF [::] LATER !!!!!!!!!!!!!!!!!!!
+    for file in npz_list[100:500]:   # GET RID OF [::] LATER !!!!!!!!!!!!!!!!!!!
         # .npz file -> pd dataframe
         arr = np.load('PPG30min/' + file)['ppg']
+        if len(arr) != 225000:
+            continue
         df = pd.DataFrame({'pleth':arr, 'timestamp':list(range(0, 1800000, 8)), 
-            'sqi_s':[-1000]*225000, 'sqi_p':[-1000]*225000, 'sqi_k':[-1000]*225000})   # stamps by milisecond
+            'skew':[-1000]*225000})   # stamps by milisecond
 
         #create 2 piles for sending each chunk 
-        df_good = pd.DataFrame({'pleth':[], 'timestamp':[], 'sqi_s':[]})
-        df_bad = pd.DataFrame({'pleth':[], 'timestamp':[], 'sqi_s':[]})
-        # print('----------------------------')
+        df_good = pd.DataFrame({'pleth':[], 'timestamp':[], 'skew':[]})
+        df_bad = pd.DataFrame({'pleth':[], 'timestamp':[], 'skew':[]})
+
         # for each 30 sec chunk of df
         window = 30 * 125
         for ii in range(0, 225000, window):
@@ -52,20 +52,20 @@ def clean(dir_name):
             # calc the SQI for smoll_df
             smoll_skew: float = skew(smoll_df['pleth'], bias=False)   
             for kk in range(ii, ii+window):
-                df.at[kk, 'sqi_s'] = smoll_skew
+                df.at[kk, 'skew'] = smoll_skew
                 # smoll_df.iloc[0, df.columns.get_loc('COL_NAME')] = x
 
             smoll_df = df.iloc[ii:ii+window]          # get a nice slice of df to reflect 'sqi' val change
-            if smoll_skew < 0.3 and smoll_skew > -0.15:
+            if smoll_skew < 0.28 and smoll_skew > -0.13:
                 df_good = pd.concat([df_good, smoll_df])
             else:
                 df_bad = pd.concat([df_bad, smoll_df])
         
         # save good and bad df's to their respective folders, using to_csv
-        df_good.to_csv('ppg_good/' + file[:-4] + '.csv')
-        df_bad.to_csv('ppg_bad/' + file[:-4] + '.csv') 
-        # df_good.to_pickle('ppg_good/' + file[:-4] + '.pkl')
-        # df_bad.to_pickle('ppg_bad/' + file[:-4] + '.pkl') 
+        # df_good.to_csv('ppg_good/' + file[:-4] + '.csv')
+        # df_bad.to_csv('ppg_bad/' + file[:-4] + '.csv') 
+        df_good.to_pickle('ppg_good/' + file[:-4] + '.pkl')
+        df_bad.to_pickle('ppg_bad/' + file[:-4] + '.pkl') 
 
 
         
@@ -77,6 +77,11 @@ def clean(dir_name):
 
 
 clean('PPG30min')
+
+
+
+
+
 
 # plotting:
     # plt.figure(figsize=(14.5, 7.5))
